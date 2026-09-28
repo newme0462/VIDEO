@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BMW M3 Competition | The Ultimate Driving Experience</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --glass-bg: rgba(10, 10, 10, 0.20);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --brand-red: #E32636;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #000;
+            color: #fff;
+            overflow: hidden; /* Prevent body scroll, use wrapper */
+            -webkit-font-smoothing: antialiased;
+            overscroll-behavior: none;
+        }
+
+        /* Hide scrollbar for a cleaner look */
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
+
+        /* The single video background */
+        #bg-video {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Glassmorphism utility */
+        .glass-hud {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Text enhancements over video */
+        .text-shadow-subtle {
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+
+        /* Smooth reveal animations */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .reveal.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .reveal-delay-1 { transition-delay: 0.1s; }
+        .reveal-delay-2 { transition-delay: 0.2s; }
+        .reveal-delay-3 { transition-delay: 0.3s; }
+
+        /* Timeline word transitions */
+        .timeline-word {
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            position: absolute;
+            right: 0;
+            bottom: 0;
+        }
+        .timeline-word.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Scroll container spanning over fixed background */
+        #scroll-wrapper {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
+            overflow-x: hidden;
+            z-index: 10;
+            scroll-behavior: smooth;
+        }
+
+        /* Pulse animation for entry */
+        @keyframes pulse-slow {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.98); }
+        }
+        .animate-pulse-slow {
+            animation: pulse-slow 3s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- THE SOLE VISUAL BACKGROUND -->
+    <video 
+        id="bg-video" 
+        autoplay
+        muted 
+        playsinline 
+        loop 
+        preload="auto">
+        <source src="https://res.cloudinary.com/dbygakqm/video/upload/v1790593092/BMW_M3_Competition_I_Speed_Ramp_Transition_l_C70_4K_RAW_1080P_HD.mp4" type="video/mp4">
+    </video>
+
+    <!-- Subtle gradient overlay purely for text contrast at extremities, does not darken the center -->
+    <div class="fixed inset-0 z-[1] bg-gradient-to-b from-black/40 via-transparent to-black/40 pointer-events-none"></div>
+
+    <!-- FLOATING NAVIGATION (HUD Style) -->
+    <nav id="hud-nav" class="fixed top-0 left-0 w-full z-40 px-6 py-6 transition-all duration-700 opacity-0 translate-y-[-20px] pointer-events-none">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex flex-col">
+                <span class="text-sm font-bold tracking-widest text-white text-shadow-subtle">BMW M3</span>
+            </div>
+            
+            <div class="hidden md:flex space-x-12 text-[10px] font-medium tracking-[0.2em] text-white/80">
+                <a href="#models" class="hover:text-white transition-colors text-shadow-subtle">MODELS</a>
+                <a href="#performance" class="hover:text-white transition-colors text-shadow-subtle">PERFORMANCE</a>
+                <a href="#design" class="hover:text-white transition-colors text-shadow-subtle">DESIGN</a>
+                <a href="#technology" class="hover:text-white transition-colors text-shadow-subtle">TECHNOLOGY</a>
+            </div>
+
+            <div>
+                <a href="#cta" class="glass-hud px-6 py-3 rounded-none text-[10px] font-bold tracking-widest text-white hover:bg-white hover:text-black transition-all duration-300">
+                    BOOK A TEST DRIVE
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- VIDEO TIMELINE UI -->
+    <div id="timeline-ui" class="fixed bottom-8 left-0 w-full z-30 px-6 opacity-0 transition-opacity duration-1000 pointer-events-none">
+        <div class="max-w-7xl mx-auto flex flex-col gap-3">
+            <div class="flex justify-between items-end text-[10px] font-mono tracking-widest text-white/80">
+                <span id="time-current">00:00</span>
+                <div class="relative h-4 flex-1 mx-8">
+                    <!-- Timeline Words mapping to video segments -->
+                    <span class="timeline-word font-bold tracking-[0.3em] text-white" data-start="0" data-end="6">PRECISION</span>
+                    <span class="timeline-word font-bold tracking-[0.3em] text-white" data-start="6" data-end="12">POWER</span>
+                    <span class="timeline-word font-bold tracking-[0.3em] text-white" data-start="12" data-end="18">CONTROL</span>
+                    <span class="timeline-word font-bold tracking-[0.3em] text-white" data-start="18" data-end="30">M PERFORMANCE</span>
+                </div>
+                <span id="time-total">00:25</span>
+            </div>
+            <div class="w-full h-[1px] bg-white/20 relative rounded-full overflow-hidden">
+                <div id="progress-bar" class="absolute top-0 left-0 h-full bg-white w-0 transition-all duration-100 ease-linear"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCROLLABLE UI CONTAINER -->
+    <main id="scroll-wrapper">
+        
+        <!-- HERO SECTION -->
+        <section id="hero" class="relative w-full min-h-screen flex flex-col justify-center px-6 md:px-16 lg:px-24 pt-24 pb-32">
+            <div class="max-w-7xl mx-auto w-full">
+                <div class="max-w-2xl">
+                    <div class="reveal">
+                        <span class="text-[10px] md:text-xs font-bold tracking-[0.3em] text-white/70 mb-2 block text-shadow-subtle">
+                            <span class="inline-block w-8 h-[1px] bg-white/50 align-middle mr-2"></span>
+                            M PERFORMANCE
+                        </span>
+                        <h1 class="text-6xl md:text-8xl lg:text-9xl font-light tracking-tighter leading-[0.9] text-white mb-6 text-shadow-subtle">
+                            M3 COMPETITION
+                        </h1>
+                    </div>
+                    <div class="reveal reveal-delay-1">
+                        <h2 class="text-2xl md:text-4xl font-light tracking-wide text-white mb-6 text-shadow-subtle">
+                            BUILT TO BE FELT.
+                        </h2>
+                        <p class="text-sm md:text-base font-light text-white/80 max-w-md leading-relaxed text-shadow-subtle">
+                            Pure performance. Precision engineering. Unmistakable presence.
+                        </p>
+                    </div>
+                    <div class="mt-12 flex flex-col sm:flex-row gap-4 reveal reveal-delay-2">
+                        <a href="#cta" class="glass-hud px-8 py-4 text-xs font-bold tracking-[0.2em] text-center hover:bg-white hover:text-black transition-colors duration-300">
+                            BOOK A TEST DRIVE
+                        </a>
+                        <a href="#performance" class="border border-white/30 px-8 py-4 text-xs font-bold tracking-[0.2em] text-center hover:bg-white/10 transition-colors duration-300 backdrop-blur-sm">
+                            EXPLORE M3
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SPACER TO ENJOY VIDEO -->
+        <div class="h-[50vh] w-full pointer-events-none"></div>
+
+        <!-- PERFORMANCE SECTION -->
+        <section id="performance" class="relative w-full min-h-screen flex items-center justify-end px-6 md:px-16 lg:px-24">
+            <div class="max-w-7xl mx-auto w-full flex justify-end">
+                <div class="glass-hud p-8 md:p-12 max-w-lg w-full rounded-sm reveal">
+                    <h3 class="text-xs font-bold tracking-[0.3em] text-white/50 mb-8 border-b border-white/10 pb-4">M3 COMPETITION</h3>
+                    
+                    <div class="space-y-8">
+                        <div class="flex justify-between items-end border-b border-white/10 pb-4">
+                            <span class="text-[10px] tracking-[0.2em] text-white/60">POWER OUTPUT</span>
+                            <div class="text-right">
+                                <span class="block text-3xl md:text-5xl font-light tracking-tighter">375 <span class="text-lg text-white/50">kW</span></span>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between items-end border-b border-white/10 pb-4">
+                            <span class="text-[10px] tracking-[0.2em] text-white/60">HORSEPOWER</span>
+                            <div class="text-right">
+                                <span class="block text-3xl md:text-5xl font-light tracking-tighter">510 <span class="text-lg text-white/50">HP</span></span>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between items-end border-b border-white/10 pb-4">
+                            <span class="text-[10px] tracking-[0.2em] text-white/60">TORQUE</span>
+                            <div class="text-right">
+                                <span class="block text-3xl md:text-5xl font-light tracking-tighter">650 <span class="text-lg text-white/50">Nm</span></span>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between items-end pb-2">
+                            <span class="text-[10px] tracking-[0.2em] text-white/60">ACCELERATION</span>
+                            <div class="text-right">
+                                <span class="block text-3xl md:text-5xl font-light tracking-tighter">3.5 <span class="text-lg text-white/50">SEC</span></span>
+                                <span class="text-[10px] tracking-widest text-white/40 block mt-1">0–100 KM/H</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SPACER TO ENJOY VIDEO -->
+        <div class="h-[80vh] w-full pointer-events-none"></div>
+
+        <!-- DESIGN SECTION -->
+        <section id="design" class="relative w-full min-h-[120vh] flex items-center justify-center px-6">
+            <div class="text-center max-w-4xl mx-auto mix-blend-plus-lighter">
+                <h2 class="text-4xl md:text-7xl lg:text-8xl font-light tracking-tighter text-white mb-6 text-shadow-subtle reveal">
+                    DESIGNED TO<br>COMMAND ATTENTION.
+                </h2>
+                <p class="text-sm md:text-lg font-light text-white/80 max-w-2xl mx-auto leading-relaxed text-shadow-subtle reveal reveal-delay-1">
+                    Every surface, proportion and aerodynamic detail has been engineered with purpose.
+                </p>
+            </div>
+        </section>
+
+        <!-- CTA SECTION -->
+        <section id="cta" class="relative w-full min-h-screen flex items-center justify-center px-6">
+            <div class="glass-hud p-10 md:p-16 max-w-2xl w-full text-center rounded-sm reveal">
+                <h3 class="text-3xl md:text-5xl font-light tracking-tight text-white mb-4">MAKE IT YOURS</h3>
+                <p class="text-sm font-light text-white/70 mb-10 tracking-wide">
+                    Request a quote for the BMW M3 Competition.
+                </p>
+                
+                <div class="mb-12">
+                    <p class="text-xs font-bold tracking-[0.2em] text-white/50 mb-2">STARTING FROM</p>
+                    <p class="text-4xl md:text-5xl font-light tracking-tighter">REQUEST PRICE</p>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <button class="bg-white text-black px-8 py-4 text-xs font-bold tracking-[0.2em] hover:bg-gray-200 transition-colors duration-300">
+                        REQUEST A QUOTE
+                    </button>
+                    <button class="border border-white/30 px-8 py-4 text-xs font-bold tracking-[0.2em] hover:bg-white/10 transition-colors duration-300">
+                        BOOK A TEST DRIVE
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- FINAL SCREEN -->
+        <section class="relative w-full h-screen flex flex-col justify-center items-center px-6 pb-24 text-center">
+            <div class="reveal">
+                <h1 class="text-5xl md:text-7xl lg:text-9xl font-light tracking-tighter leading-[0.9] text-white mb-6 text-shadow-subtle">
+                    THE ULTIMATE<br>DRIVING EXPERIENCE.
+                </h1>
+                <p class="text-sm md:text-lg font-bold tracking-[0.3em] text-white/80 mb-12 text-shadow-subtle">
+                    BMW M3 COMPETITION
+                </p>
+                <a href="#cta" class="inline-block glass-hud px-10 py-5 text-xs font-bold tracking-[0.2em] hover:bg-white hover:text-black transition-all duration-500">
+                    BOOK A TEST DRIVE
+                </a>
+            </div>
+        </section>
+        
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const video = document.getElementById('bg-video');
+            const nav = document.getElementById('hud-nav');
+            const timelineUI = document.getElementById('timeline-ui');
+            const scrollWrapper = document.getElementById('scroll-wrapper');
+            const progressBar = document.getElementById('progress-bar');
+            const timeCurrent = document.getElementById('time-current');
+            const timelineWords = document.querySelectorAll('.timeline-word');
+            
+            // Format time utility
+            const formatTime = (seconds) => {
+                const mins = Math.floor(seconds / 60);
+                const secs = Math.floor(seconds % 60);
+                return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            };
+
+            // Attempt to force play just in case autoplay attribute is delayed
+            const playPromise = video.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(error => {
+                    console.warn("Auto-play prevented by browser:", error);
+                });
+            }
+
+            // Reveal UI immediately after a short cinematic delay
+            setTimeout(() => {
+                nav.classList.remove('opacity-0', 'translate-y-[-20px]', 'pointer-events-none');
+                timelineUI.classList.remove('opacity-0', 'pointer-events-none');
+                
+                // Trigger initial scroll reveals for hero section
+                checkReveals();
+            }, 300);
+
+            // Video Timeline Sync
+            video.addEventListener('timeupdate', () => {
+                if (!video.duration) return;
+                
+                const current = video.currentTime;
+                const duration = video.duration;
+                
+                // Update Progress Bar
+                const progress = (current / duration) * 100;
+                progressBar.style.width = `${progress}%`;
+                
+                // Update Time Text
+                timeCurrent.textContent = formatTime(current);
+
+                // Update Active Word
+                timelineWords.forEach(word => {
+                    const start = parseFloat(word.dataset.start);
+                    const end = parseFloat(word.dataset.end);
+                    
+                    if (current >= start && current < end) {
+                        if (!word.classList.contains('active')) {
+                            // Deactivate others
+                            timelineWords.forEach(w => w.classList.remove('active'));
+                            // Activate current
+                            word.classList.add('active');
+                        }
+                    }
+                });
+            });
+
+            // Handle metadata load to set exact duration if available
+            video.addEventListener('loadedmetadata', () => {
+                document.getElementById('time-total').textContent = formatTime(video.duration);
+            });
+
+            // Scroll Reveal Observer Logic
+            const revealElements = document.querySelectorAll('.reveal');
+            
+            const checkReveals = () => {
+                const windowHeight = window.innerHeight;
+                
+                revealElements.forEach(el => {
+                    const elementTop = el.getBoundingClientRect().top;
+                    const elementVisible = 100; // threshold
+                    
+                    if (elementTop < windowHeight - elementVisible) {
+                        el.classList.add('is-visible');
+                    }
+                });
+            };
+
+            // Listen to scroll events on the wrapper, NOT the window
+            scrollWrapper.addEventListener('scroll', checkReveals);
+            
+            // Optional: Adjust Nav background opacity based on scroll position inside the wrapper
+            scrollWrapper.addEventListener('scroll', () => {
+                if (scrollWrapper.scrollTop > 100) {
+                    nav.classList.add('glass-hud');
+                } else {
+                    nav.classList.remove('glass-hud');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
